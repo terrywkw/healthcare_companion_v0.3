@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   MessageCircle, Mic, Send, Image, Menu, Bell, Heart, Calendar, 
   Activity, Phone, AlertCircle, Settings, ChevronDown, X, Plus,
@@ -14,8 +14,78 @@ const AdvancedHealthHub = () => {
   const [activeContext, setActiveContext] = useState(null);
   const [expandedCard, setExpandedCard] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
+  const [currentTranscript, setCurrentTranscript] = useState('');  
 
-  // Contextual suggestions based on time and user data
+  // mock responses for voice input
+  const mockResponses = {
+    "what's my blood pressure": "Your last blood pressure reading was 120/80, taken yesterday at 9 AM.",
+    "schedule a doctor appointment": "I can help you schedule an appointment. Dr. Smith has availability next Tuesday at 2 PM.",
+    "remind me to take medication": "I've set a reminder for your medication. I'll notify you at your usual time of 9 AM.",
+    "how am i doing today": "Based on your vitals today, you're doing well. Your heart rate and blood pressure are within normal ranges.",
+    "default": "I heard you, but I'm not sure how to help with that. Could you please rephrase?"
+  };
+
+  const startVoiceInput = useCallback(() => {
+    if ('webkitSpeechRecognition' in window) {
+      const recognition = new (window.webkitSpeechRecognition)();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+
+      const listeningMessageId = Date.now();
+      setMessages(prev => [...prev, {
+        id: listeningMessageId,
+        type: 'voice-input',
+        status: 'listening',
+        content: '',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      }]);
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        setCurrentTranscript('');
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        setCurrentTranscript(transcript);
+        
+        setMessages(prev => prev.map(msg => 
+          msg.id === listeningMessageId 
+            ? { ...msg, content: transcript }
+            : msg
+        ));
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+        
+        setMessages(prev => {
+          const messages = prev.map(msg => 
+            msg.id === listeningMessageId 
+              ? { 
+                  ...msg, 
+                  type: 'user',
+                  status: 'completed'
+                }
+              : msg
+          );
+
+          const response = mockResponses[currentTranscript.toLowerCase()] || mockResponses.default;
+          return [...messages, {
+            id: Date.now(),
+            type: 'ai',
+            content: response,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }];
+        });
+      };
+
+      recognition.start();
+    } else {
+      alert('Speech recognition is not supported in this browser.');
+    }
+  }, [currentTranscript]);
+  
   const contextualSuggestions = {
     morning: ["Track morning vitals", "Log breakfast", "Take medications"],
     medication: ["View schedule", "Mark as taken", "Check interactions"],
@@ -23,7 +93,6 @@ const AdvancedHealthHub = () => {
     emergency: ["Call emergency", "View vital history", "Contact family"]
   };
 
-  // Simulated health metrics
   const healthMetrics = {
     bloodPressure: { value: "120/80", trend: "stable" },
     heartRate: { value: "72", trend: "improving" },
@@ -31,7 +100,6 @@ const AdvancedHealthHub = () => {
   };
 
   useEffect(() => {
-    // Simulate initial AI greeting with typing indicator
     setIsTyping(true);
     setTimeout(() => {
       setMessages([{
@@ -57,7 +125,6 @@ const AdvancedHealthHub = () => {
       setInputText('');
       setIsTyping(true);
 
-      // Simulate AI analyzing and responding
       setTimeout(() => {
         const aiResponse = {
           id: messages.length + 2,
@@ -106,7 +173,6 @@ const AdvancedHealthHub = () => {
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
-      {/* Header with Context Awareness */}
       <motion.div 
         className="bg-white shadow-sm p-4"
         initial={{ y: -20, opacity: 0 }}
@@ -137,13 +203,12 @@ const AdvancedHealthHub = () => {
               className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center"
               whileHover={{ scale: 1.1 }}
             >
-              <img src="/api/placeholder/40/40" alt="Profile" className="rounded-full" />
+              <img src="https://picsum.photos/40/40" alt="Profile" className="rounded-full" />
             </motion.div>
           </div>
         </div>
       </motion.div>
 
-      {/* Quick Access Menu */}
       <AnimatePresence>
         {showQuickMenu && (
           <motion.div
@@ -173,7 +238,6 @@ const AdvancedHealthHub = () => {
         )}
       </AnimatePresence>
 
-      {/* Dynamic Content Area */}
       <div className="flex-1 overflow-y-auto p-4">
         <AnimatePresence>
           {messages.map((message) => (
@@ -181,55 +245,94 @@ const AdvancedHealthHub = () => {
               key={message.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'} mb-4`}
+              className={`flex ${
+                message.type === 'user' || message.type === 'voice-input' 
+                  ? 'justify-end' 
+                  : 'justify-start'
+              } mb-4`}
             >
               <div className={`max-w-[80%] rounded-lg p-4 ${
-                message.type === 'user' ? 'bg-blue-600 text-white' : 'bg-white shadow-sm'
+                message.type === 'user' || message.type === 'voice-input'
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-white shadow-sm'
               }`}>
-                <p className="text-sm">{message.content}</p>
-                
-                {/* Contextual Suggestions */}
-                {message.suggestions && (
-                  <motion.div 
-                    className="mt-3 flex flex-wrap gap-2"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                  >
-                    {message.suggestions.map((suggestion, index) => (
-                      <ContextualSuggestion 
-                        key={index}
-                        text={suggestion}
-                        onClick={() => setActiveContext(suggestion)}
-                      />
-                    ))}
-                  </motion.div>
-                )}
+                {message.type === 'voice-input' ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <motion.div
+                        animate={{ scale: [1, 1.2, 1] }}
+                        transition={{ repeat: Infinity, duration: 1.5 }}
+                      >
+                        <Mic className="w-4 h-4" />
+                      </motion.div>
+                      <span className="text-sm">Listening...</span>
+                    </div>
 
-                {/* Health Metrics Display */}
-                {message.metrics && (
-                  <motion.div 
-                    className="mt-4 grid grid-cols-2 gap-3"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.5 }}
-                  >
-                    {Object.entries(message.metrics).map(([key, data], index) => (
-                      <QuickMetricCard
-                        key={key}
-                        title={key.replace(/([A-Z])/g, ' $1').trim()}
-                        value={data.value}
-                        trend={data.trend}
-                        onExpand={() => setExpandedCard(key)}
-                      />
-                    ))}
-                  </motion.div>
+                    <div className="flex justify-center space-x-1 h-8">
+                      {[...Array(4)].map((_, i) => (
+                        <motion.div
+                          key={i}
+                          className="w-1 bg-white bg-opacity-80"
+                          animate={{ height: [12, 24, 12] }}
+                          transition={{
+                            repeat: Infinity,
+                            duration: 0.8,
+                            delay: i * 0.2,
+                          }}
+                        />
+                      ))}
+                    </div>
+
+                    {message.content && (
+                      <div className="text-sm mt-2">
+                        <p className="text-white text-opacity-80">I heard:</p>
+                        <p>{message.content}</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm">{message.content}</p>
+                    {message.suggestions && (
+                      <motion.div 
+                        className="mt-3 flex flex-wrap gap-2"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.3 }}
+                      >
+                        {message.suggestions.map((suggestion, index) => (
+                          <ContextualSuggestion 
+                            key={index}
+                            text={suggestion}
+                            onClick={() => setActiveContext(suggestion)}
+                          />
+                        ))}
+                      </motion.div>
+                    )}
+                    {message.metrics && (
+                      <motion.div 
+                        className="mt-4 grid grid-cols-2 gap-3"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.5 }}
+                      >
+                        {Object.entries(message.metrics).map(([key, data], index) => (
+                          <QuickMetricCard
+                            key={key}
+                            title={key.replace(/([A-Z])/g, ' $1').trim()}
+                            value={data.value}
+                            trend={data.trend}
+                            onExpand={() => setExpandedCard(key)}
+                          />
+                        ))}
+                      </motion.div>
+                    )}
+                  </>
                 )}
               </div>
             </motion.div>
           ))}
-          
-          {/* Typing Indicator */}
+
           {isTyping && (
             <motion.div
               initial={{ opacity: 0 }}
@@ -244,7 +347,6 @@ const AdvancedHealthHub = () => {
         </AnimatePresence>
       </div>
 
-      {/* Enhanced Input Area */}
       <motion.div 
         className="bg-white border-t p-4"
         initial={{ y: 100 }}
@@ -269,7 +371,8 @@ const AdvancedHealthHub = () => {
             className="p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
-            onClick={() => setIsListening(!isListening)}
+            onClick={startVoiceInput}
+            disabled={isListening}
           >
             <Mic className={`w-6 h-6 ${isListening ? 'text-red-500' : ''}`} />
           </motion.button>
@@ -284,7 +387,6 @@ const AdvancedHealthHub = () => {
         </div>
       </motion.div>
 
-      {/* Context-Aware Modal */}
       <AnimatePresence>
         {expandedCard && (
           <motion.div
