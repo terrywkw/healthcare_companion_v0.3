@@ -1,38 +1,28 @@
 import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Layout from './components/Layout';
 import AdvancedHealthHub from './components/AdvancedHealthHub';
+import VitalsPage from './components/VitalsPage';
+import MedicationsPage from './components/MedicationsPage';
+import AppointmentsPage from './components/AppointmentsPage';
+import EmergencyPage from './components/EmergencyPage';
 
 function App() {
   return (
-    <div className="h-screen">
-      <AdvancedHealthHub />
-    </div>
+    <Router>
+      <Layout>
+      {/* <div className="h-screen"> */}
+        <Routes>
+          <Route path="/" element={<AdvancedHealthHub />} />
+          <Route path="/vitals" element={<VitalsPage />} />
+          <Route path="/medications" element={<MedicationsPage />} />
+          <Route path="/appointments" element={<AppointmentsPage />} />
+          <Route path="/emergency" element={<EmergencyPage />} />
+        </Routes>
+      {/* </div> */}
+      </Layout>
+    </Router>
   );
 }
 
 export default App;
-
-// import logo from './logo.svg';
-// import './App.css';
-
-// function App() {
-//   return (
-//     <div className="App">
-//       <header className="App-header">
-//         <img src={logo} className="App-logo" alt="logo" />
-//         <p>
-//           Edit <code>src/App.js</code> and save to reload. healthcare_companion
-//         </p>
-//         <a
-//           className="App-link"
-//           href="https://reactjs.org"
-//           target="_blank"
-//           rel="noopener noreferrer"
-//         >
-//           Learn React
-//         </a>
-//       </header>
-//     </div>
-//   );
-// }
-
-// export default App;
