@@ -13,8 +13,8 @@ import {
   Tooltip,
   ResponsiveContainer
 } from 'recharts';
-import Navigation from './Navigation';
-import FloatingChat from './FloatingChat';
+import Navigation from '../../layout/Navigation';
+import FloatingChat from '../../shared/FloatingChat';
 
 
 const VitalsPage = () => {

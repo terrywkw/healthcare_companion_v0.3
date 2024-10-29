@@ -3,7 +3,7 @@ import {
   Mic, Send, Image, Plus, Thermometer, 
   Pill, Stethoscope, ArrowRight
 } from 'lucide-react';
-import Navigation from './Navigation';
+import Navigation from '../../layout/Navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const AdvancedHealthHub = () => {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import AdvancedHealthHub from './AdvancedHealthHub';
+import AdvancedHealthHub from '../pages/AdvancedHealthHub/AdvancedHealthHub';
 import { useLocation } from 'react-router-dom';
 
 const FloatingChat = () => {
