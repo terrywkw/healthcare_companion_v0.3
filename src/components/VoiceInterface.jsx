@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Mic, Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -8,14 +8,14 @@ const VoiceMessageInterface = () => {
   const [isListening, setIsListening] = useState(false);
   const [currentTranscript, setCurrentTranscript] = useState('');
 
-  // Mock responses for demo
-  const mockResponses = {
+  // Move mockResponses to useMemo to prevent unnecessary recreations
+  const mockResponses = useMemo(() => ({
     "what's my blood pressure": "Your last blood pressure reading was 120/80, taken yesterday at 9 AM.",
     "schedule a doctor appointment": "I can help you schedule an appointment. Dr. Smith has availability next Tuesday at 2 PM.",
     "remind me to take medication": "I've set a reminder for your medication. I'll notify you at your usual time of 9 AM.",
     "how am i doing today": "Based on your vitals today, you're doing well. Your heart rate and blood pressure are within normal ranges.",
     "default": "I heard you, but I'm not sure how to help with that. Could you please rephrase?"
-  };
+  }), []);
 
   const startListening = useCallback(() => {
     if ('webkitSpeechRecognition' in window) {
@@ -23,7 +23,6 @@ const VoiceMessageInterface = () => {
       recognition.continuous = false;
       recognition.interimResults = true;
 
-      // Add a "listening" message when starting
       const listeningMessageId = Date.now();
       setMessages(prev => [...prev, {
         id: listeningMessageId,
@@ -39,10 +38,9 @@ const VoiceMessageInterface = () => {
       };
 
       recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
+        const transcript = event.results[0][0].transcript.toLowerCase();
         setCurrentTranscript(transcript);
         
-        // Update the listening message with the current transcript
         setMessages(prev => prev.map(msg => 
           msg.id === listeningMessageId 
             ? { ...msg, content: transcript }
@@ -52,43 +50,60 @@ const VoiceMessageInterface = () => {
 
       recognition.onend = () => {
         setIsListening(false);
-        // Remove the listening status and update message type
-        setMessages(prev => prev.map(msg => 
-          msg.id === listeningMessageId 
-            ? { 
-                ...msg, 
-                type: 'user',
-                status: 'completed'
-              }
-            : msg
-        ));
+        
+        setMessages(prev => {
+          const updatedMessages = prev.map(msg => 
+            msg.id === listeningMessageId 
+              ? { 
+                  ...msg, 
+                  type: 'user',
+                  status: 'completed'
+                }
+              : msg
+          );
 
-        // Add AI response
-        setTimeout(() => {
-          const response = mockResponses[currentTranscript.toLowerCase()] || mockResponses.default;
-          setMessages(prev => [...prev, {
-            id: Date.now(),
-            type: 'ai',
-            content: response,
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          }]);
-        }, 500);
+          // Add AI response
+          setTimeout(() => {
+            const response = mockResponses[currentTranscript] || mockResponses.default;
+            setMessages([...updatedMessages, {
+              id: Date.now(),
+              type: 'ai',
+              content: response,
+              timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            }]);
+          }, 500);
+
+          return updatedMessages;
+        });
       };
 
       recognition.start();
     } else {
       alert('Speech recognition is not supported in this browser.');
     }
-  }, [currentTranscript]);
+  }, [currentTranscript, mockResponses]); // Added mockResponses to dependencies
 
   const handleSend = () => {
     if (inputText.trim()) {
-      setMessages(prev => [...prev, {
+      const userMessage = {
         id: Date.now(),
         type: 'user',
         content: inputText,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }]);
+      };
+      setMessages(prev => [...prev, userMessage]);
+
+      // Process response
+      setTimeout(() => {
+        const response = mockResponses[inputText.toLowerCase()] || mockResponses.default;
+        setMessages(prev => [...prev, {
+          id: Date.now(),
+          type: 'ai',
+          content: response,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }]);
+      }, 500);
+
       setInputText('');
     }
   };
@@ -113,7 +128,6 @@ const VoiceMessageInterface = () => {
         >
           {isVoiceInput ? (
             <div className="space-y-2">
-              {/* Voice Input Status */}
               <div className="flex items-center space-x-2">
                 <motion.div
                   animate={{ scale: [1, 1.2, 1] }}
@@ -124,7 +138,6 @@ const VoiceMessageInterface = () => {
                 <span className="text-sm">Listening...</span>
               </div>
 
-              {/* Voice Visualization */}
               <div className="flex justify-center space-x-1 h-8">
                 {[...Array(4)].map((_, i) => (
                   <motion.div
@@ -142,7 +155,6 @@ const VoiceMessageInterface = () => {
                 ))}
               </div>
 
-              {/* Transcript */}
               {message.content && (
                 <div className="text-sm mt-2">
                   <p className="text-white text-opacity-80">I heard:</p>
@@ -167,14 +179,12 @@ const VoiceMessageInterface = () => {
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
-      {/* Message Area */}
       <div className="flex-1 overflow-y-auto p-4">
         {messages.map((message) => (
           <MessageBubble key={message.id} message={message} />
         ))}
       </div>
 
-      {/* Input Area */}
       <div className="bg-white border-t p-4">
         <div className="flex items-center space-x-2">
           <input

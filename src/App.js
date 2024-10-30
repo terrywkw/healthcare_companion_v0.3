@@ -9,7 +9,10 @@ import AdvancedHealthHub from './components/pages/AdvancedHealthHub/AdvancedHeal
 import VitalsPage from './components/pages/VitalsPage/VitalsPage';
 import MedicationsPage from './components/pages/MedicationsPage/MedicationsPage';
 import AppointmentsPage from './components/pages/AppointmentsPage/AppointmentsPage';
+import MedicalRecordsPage from './components/pages/MedicalRecordsPage/MedicalRecordsPage';
 import EmergencyPage from './components/pages/EmergencyPage/EmergencyPage';
+import ProfilePage from './components/pages/ProfilePage/ProfilePage';
+
 
 function App() {
   const basename = process.env.NODE_ENV === 'production' 
@@ -24,7 +27,9 @@ function App() {
           <Route path="/vitals" element={<VitalsPage />} />
           <Route path="/medications" element={<MedicationsPage />} />
           <Route path="/appointments" element={<AppointmentsPage />} />
+          <Route path="/records" element={<MedicalRecordsPage />} />
           <Route path="/emergency" element={<EmergencyPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Layout>

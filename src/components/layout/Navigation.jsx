@@ -2,12 +2,16 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Menu, Bell, Activity, Pill, Calendar, 
-  AlertCircle, ChevronDown
+  RefreshCcw, Plus, X, User,
+  ChevronRight, ChevronLeft,
+  AlertCircle, FileText
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import NotificationCenter from '../shared/NotificationCenter';
 
-const Navigation = () => {
+const Navigation = ({ isInModal = false, onModalClose }) => {
   const [showQuickMenu, setShowQuickMenu] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -15,6 +19,7 @@ const Navigation = () => {
     { title: 'Vitals', icon: Activity, path: '/vitals', color: 'text-blue-500' },
     { title: 'Medications', icon: Pill, path: '/medications', color: 'text-green-500' },
     { title: 'Appointments', icon: Calendar, path: '/appointments', color: 'text-purple-500' },
+    { title: 'Medical Records', icon: FileText, path: '/records', color: 'text-indigo-500' },
     { title: 'Emergency', icon: AlertCircle, path: '/emergency', color: 'text-red-500' }
   ];
 
@@ -32,37 +37,55 @@ const Navigation = () => {
       >
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-3">
-            <button 
-              className="p-2 rounded-full hover:bg-gray-100"
-              onClick={() => setShowQuickMenu(!showQuickMenu)}
-            >
-              <Menu className="w-6 h-6" />
-            </button>
+            {isInModal ? (
+              // Show close button in modal mode
+              <button 
+                className="p-2 rounded-full hover:bg-gray-100"
+                onClick={onModalClose}
+              >
+                <X className="w-6 h-6" />
+              </button>
+            ) : (
+              // Show menu button in normal mode
+              <button 
+                className="p-2 rounded-full hover:bg-gray-100"
+                onClick={() => setShowQuickMenu(!showQuickMenu)}
+              >
+                <Menu className="w-6 h-6" />
+              </button>
+            )}
             <div>
-              <h1 className="text-lg font-semibold">{getPageTitle()}</h1>
+              <h1 className="text-lg font-semibold">Health Assistant</h1>
               <p className="text-sm text-gray-500">Morning Check-in</p>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <motion.button
-              className="p-2 rounded-full hover:bg-gray-100 relative"
-              whileHover={{ scale: 1.1 }}
-            >
-              <Bell className="w-6 h-6" />
-              <span className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full" />
-            </motion.button>
-            <motion.div 
-              className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center"
-              whileHover={{ scale: 1.1 }}
-            >
-              <img src="/api/placeholder/40/40" alt="Profile" className="rounded-full" />
-            </motion.div>
-          </div>
+          
+          {/* Only show these controls in full page mode */}
+          {!isInModal && (
+            <div className="flex items-center space-x-2">
+              <motion.button
+                className="p-2 rounded-full hover:bg-gray-100 relative"
+                whileHover={{ scale: 1.1 }}
+                onClick={() => setShowNotifications(true)}
+              >
+                <Bell className="w-6 h-6" />
+                <span className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full" />
+              </motion.button>
+              <motion.button 
+                className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center"
+                whileHover={{ scale: 1.1 }}
+                onClick={() => navigate('/profile')}
+              >
+                <img src="https://avatars.githubusercontent.com/u/1084231?v=4/40/40" alt="Profile" className="rounded-full" />
+              </motion.button>
+            </div>
+          )}
         </div>
       </motion.div>
 
+      {/* Quick Menu - Only show in non-modal mode */}
       <AnimatePresence>
-        {showQuickMenu && (
+        {showQuickMenu && !isInModal && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
@@ -90,6 +113,10 @@ const Navigation = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      <NotificationCenter 
+        isOpen={showNotifications} 
+        onClose={() => setShowNotifications(false)} 
+      />
     </>
   );
 };
