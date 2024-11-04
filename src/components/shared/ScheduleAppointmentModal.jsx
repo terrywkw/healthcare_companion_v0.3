@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, User, Video, Calendar, Clock, MapPin, 
@@ -23,6 +23,18 @@ const ScheduleAppointmentModal = ({ isOpen, onClose }) => {
     notes: '',
     documents: []
   });
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+    
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, [isOpen]);
 
   // Mock data for providers
   const providers = [
@@ -253,66 +265,71 @@ const ScheduleAppointmentModal = ({ isOpen, onClose }) => {
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
-          onClick={onClose}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center p-4 z-50 overflow-y-auto"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.95, opacity: 0 }}
+          className="relative w-full max-w-lg my-8"
+          onClick={e => e.stopPropagation()}
         >
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            className="bg-white rounded-xl w-full max-w-lg overflow-hidden"
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="flex justify-between items-center p-4 border-b">
-              <h2 className="text-xl font-semibold">Schedule Appointment</h2>
-              <button
-                onClick={onClose}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
+            <div className="bg-white rounded-xl overflow-hidden shadow-xl">
+              {/* Fixed Header */}
+              <div className="sticky top-0 z-10 flex justify-between items-center p-4 border-b bg-white">
+                <h2 className="text-xl font-semibold">Schedule Appointment</h2>
+                <button
+                  onClick={onClose}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
 
-            {/* Content */}
-            <div className="p-6">
-              <StepIndicator />
-              {renderStep()}
-            </div>
+              {/* Scrollable Content */}
+              <div className="max-h-[calc(100vh-200px)] overflow-y-auto">
+                  <div className="p-6">
+                    <StepIndicator />
+                    {renderStep()}
+                  </div>
+                </div>
 
-            {/* Footer */}
-            <div className="flex justify-between items-center p-4 border-t bg-gray-50">
-              <button
-                onClick={() => step > 1 && setStep(step - 1)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-lg ${
-                  step > 1 
-                    ? 'text-blue-600 hover:bg-blue-50' 
-                    : 'text-gray-400 cursor-not-allowed'
-                }`}
-                disabled={step === 1}
-              >
-                <ChevronLeft className="w-5 h-5" />
-                <span>Back</span>
-              </button>
+            {/* Fixed Footer */}
+            <div className="sticky bottom-0 z-10 flex justify-between items-center p-4 border-t bg-gray-50">
+                <button
+                  onClick={() => step > 1 && setStep(step - 1)}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg ${
+                    step > 1 
+                      ? 'text-blue-600 hover:bg-blue-50' 
+                      : 'text-gray-400 cursor-not-allowed'
+                  }`}
+                  disabled={step === 1}
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                  <span>Back</span>
+                </button>
+                
               
-              <button
-                onClick={() => {
-                  if (step < 3) {
-                    setStep(step + 1);
-                  } else {
-                    // Handle form submission
-                    console.log(formData);
-                    setShowCalendarSync(true); // Show calendar sync instead of closing
-                  }
+                <button
+                  onClick={() => {
+                    if (step < 3) {
+                      setStep(step + 1);
+                    } else {
+                      // Handle form submission
+                      console.log(formData);
+                      setShowCalendarSync(true);
+                    }
                 }}
                 className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
               >
                 <span>{step === 3 ? 'Schedule' : 'Next'}</span>
                 {step < 3 && <ChevronRight className="w-5 h-5" />}
               </button>
+
               <CalendarSyncModal
                 isOpen={showCalendarSync}
                 onClose={() => {
@@ -338,6 +355,7 @@ const ScheduleAppointmentModal = ({ isOpen, onClose }) => {
 
 
             </div>
+          </div>
           </motion.div>
         </motion.div>
       )}

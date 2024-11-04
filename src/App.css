@@ -51,3 +51,53 @@
     transform: rotate(360deg);
   }
 }
+
+/* Mobile-first responsive adjustments */
+@layer utilities {
+  .responsive-container {
+    @apply w-full max-w-6xl mx-auto px-3 sm:px-4;
+  }
+  
+  .responsive-padding {
+    @apply p-3 sm:p-4;
+  }
+  
+  .responsive-text {
+    @apply text-sm sm:text-base;
+  }
+  
+  .responsive-heading {
+    @apply text-xl sm:text-2xl font-bold;
+  }
+}
+/* Safe area insets for modern mobile devices */
+:root {
+  --sat: env(safe-area-inset-top);
+  --sar: env(safe-area-inset-right);
+  --sab: env(safe-area-inset-bottom);
+  --sal: env(safe-area-inset-left);
+}
+
+.pb-safe {
+  padding-bottom: calc(1rem + var(--sab, 0px));
+}
+
+/* Add to your global CSS */
+@layer utilities {
+  .modal-scroll-container {
+    @apply max-h-[100vh] overflow-y-auto overscroll-contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .modal-content {
+    @apply max-h-[calc(100vh-200px)] overflow-y-auto overscroll-contain;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Prevent body scrolling when modal is open */
+.modal-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}
