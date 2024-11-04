@@ -207,14 +207,14 @@ const AdvancedHealthHub = ({ isInModal = false, onClose }) => {
   }, []);
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col h-[100dvh] bg-gray-50">
       <Navigation 
         isInModal={isInModal} 
         onModalClose={onClose}
       />
       
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto p-4 pb-safe">
         <AnimatePresence>
           {messages.map((message) => (
             <motion.div
@@ -313,7 +313,7 @@ const AdvancedHealthHub = ({ isInModal = false, onClose }) => {
 
       {/* Input Area */}
       <motion.div 
-        className="bg-white border-t p-4"
+        className="sticky bottom-0 bg-white border-t p-4 pb-safe"
         initial={{ y: 100 }}
         animate={{ y: 0 }}
       >
